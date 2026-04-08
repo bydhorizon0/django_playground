@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Django App{% endblock %}</title>
+    <style>
+        .nav-container { display: flex; gap: 15px; background: #f8f9fa; padding: 10px; }
+        .messages-container { margin: 20px; }
+        .alert { padding: 15px; border-radius: 4px; margin-bottom: 10px; }
+        .alert-success { background-color: #d4edda; color: #155724; border-color: #c3e6cb; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border-color: #f5c6cb; }
+        .alert-info { background-color: #d1ecf1; color: #0c5460; border-color: #bee5eb; }
+    </style>
+</head>
+<body>
+
+<nav class="nav-container">
+    <a href="{% url 'home' %}">홈</a>
+    {% if user.is_authenticated %}
+        <span>{{ user.email }}님 환영합니다</span>
+        <form action="{% url 'logout' %}" method="post" style="display: inline;">
+            {% csrf_token %}
+            <button type="submit">로그아웃</button>
+        </form>
+    {% else %}
+        <a href="{% url 'login' %}">로그인</a>
+        <a href="{% url 'signup' %}">회원가입</a>
+    {% endif %}
+</nav>
+
+{% if messages %}
+    <div class="messages-container">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+
+<main style="padding: 20px;">
+    {% block content %}
+    {% endblock %}
+</main>
+
+<footer style="text-align: center; margin-top: 50px; color: gray;">
+    <p>&copy; 2026 My Django Project</p>
+</footer>
+
+</body>
+</html>
