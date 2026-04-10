@@ -6,7 +6,7 @@ app_name = "forum"
 
 urlpatterns = [
     # posts
-    path("posts/", views.PostListView.as_view(), name="post-list"),
+    path("posts/", views.PostOffsetBasedListView.as_view(), name="post-list"),
     path("posts/<int:pk>/", views.PostDetailView.as_view(), name="post-detail"),
     path("posts/new/", views.PostCreateView.as_view(), name="post-create"),
     path("posts/<int:pk>/edit/", views.PostUpdateView.as_view(), name="post-update"),

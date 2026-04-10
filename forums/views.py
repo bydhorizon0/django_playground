@@ -18,9 +18,73 @@ from forums.forms import PostForm, CommentForm
 from forums.models import Post, Comment
 
 
-class PostListView(ListView):
+class PostOffsetBasedListView(ListView):
     model = Post
     template_name = "posts/post_list.html"
+    context_object_name = "posts"
+    paginate_by = 15
+
+    def get_queryset(self):
+        search_type = self.request.GET.get("type", "").strip()
+        search_query = self.request.GET.get("q", "").strip()
+
+        comment_count_subquery = (
+            Comment.objects.filter(post_id=OuterRef("pk"))
+            .values("post_id")
+            .annotate(count=Count("id"))
+            .values("count")
+        )
+
+        queryset = (
+            super()
+            .get_queryset()
+            .select_related("author")
+            .annotate(
+                comment_count=Coalesce(
+                    Subquery(
+                        comment_count_subquery,
+                        output_field=IntegerField(),
+                    ),
+                    0,
+                ),
+            )
+            .defer("content")
+            .only(
+                "id",
+                "title",
+                "created_at",
+                "view_count",
+                "author__id",
+                "author__email",
+            )
+            .order_by("-created_at", "-id")
+        )
+
+        match search_type:
+            case "t":
+                queryset = queryset.filter(title__icontains=search_query)
+            case "c":
+                queryset = queryset.filter(content__icontains=search_query)
+            case "a":
+                queryset = queryset.filter(author__email__icontains=search_query)
+            case "tc":
+                queryset = queryset.filter(
+                    Q(title__icontains=search_query)
+                    | Q(content__icontains=search_query)
+                )
+            case _:
+                queryset = queryset.filter(
+                    Q(title__icontains=search_query)
+                    | Q(content__icontains=search_query)
+                    | Q(author__email__icontains=search_query)
+                )
+
+        return queryset
+
+
+class PostCursorBasedListView(ListView):
+    model = Post
+    template_name = "posts/post_cursor_list.html"
     context_object_name = "posts"
     paginate_by = 15
 

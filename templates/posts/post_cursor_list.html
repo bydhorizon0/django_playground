@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+
+{% block title %}
+    게시판
+{% endblock %}
+
+{% block content %}
+    <h2>커뮤니티 게시판</h2>
+    <a href="{% url 'forum:post-create' %}" class="btn btn-primary">글쓰기</a>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>번호</th>
+            <th>제목</th>
+            <th>작성자</th>
+            <th>작성일</th>
+            <th>조회수</th>
+        </tr>
+        </thead>
+        <tbody>
+        {% for post in posts %}
+            <tr>
+                <td>{{ post.id }}</td>
+                <td>
+                    <a href="{% url 'forum:post-detail' post.pk %}">{{ post.title }} ({{ post.comment_count }})</a>
+                </td>
+                <td>{{ post.author.email }}</td>
+                <td>{{ post.created_at|date:"Y-m-d" }}</td>
+                <td>{{ post.view_count }}</td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="5">작성된 게시글이 없습니다.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 커서 기반 페이지네이션 -->
+    <nav>
+        <ul class="paginator">
+            {% if prev_cursor %}
+                <li>
+                    <a href="?cursor={{ prev_cursor }}&direction=prev">이전</a>
+                </li>
+            {% endif %}
+
+            {% if next_cursor %}
+                <li>
+                    <a href="?cursor={{ next_cursor }}&direction=next">다음</a>
+                </li>
+            {% else %}
+                <p>마지막 페이지입니다.</p>
+            {% endif %}
+        </ul>
+    </nav>
+{% endblock %}
