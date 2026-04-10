@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load query_helpers %}
 
 {% block title %}
     게시판
@@ -55,9 +56,9 @@
         <nav>
             <ul>
                 {% if page_obj.has_previous %}
-                    <li><a href="?page=1&type={{ request.GET.type }}&q={{ request.GET.q }}">처음</a></li>
+                    <li><a href="?{% replace_query_param request 'page' 1 %}">처음</a></li>
                     <li>
-                        <a href="?page={{ page_obj.previous_page_number }}&type={{ request.GET.type }}&q={{ request.GET.q }}">이전</a>
+                        <a href="?{% replace_query_param request 'page' page_obj.previous_page_number %}">이전</a>
                     </li>
                 {% endif %}
 
@@ -65,11 +66,11 @@
                     {% if page_number >= page_obj.number|add:-5 and page_number <= page_obj.number|add:5 %}
                         {% if page_number == page_obj.number %}
                             <li class="page-item active">
-                                <a href="?page={{ page_number }}&type={{ request.GET.type }}&q={{ request.GET.q }}">{{ page_number }}</a>
+                                <a href="?{% replace_query_param request 'page' page_number %}">{{ page_number }}</a>
                             </li>
                         {% else %}
                             <li class="page-item">
-                                <a href="?page={{ page_number }}&type={{ request.GET.type }}&q={{ request.GET.q }}">{{ page_number }}</a>
+                                <a href="?{% replace_query_param request 'page' page_number %}">{{ page_number }}</a>
                             </li>
                         {% endif %}
                     {% endif %}
@@ -77,10 +78,10 @@
 
                 {% if page_obj.has_next %}
                     <li>
-                        <a href="?page={{ page_obj.next_page_number }}&type={{ request.GET.type }}&q={{ request.GET.q }}">다음</a>
+                        <a href="?{% replace_query_param request 'page' page_obj.next_page_number %}">다음</a>
                     </li>
                     <li>
-                        <a href="?page={{ page_obj.paginator.num_pages }}&type={{ request.GET.type }}&q={{ request.GET.q }}">끝</a>
+                        <a href="?{% replace_query_param request 'page' page_obj.paginator.num_pages %}">끝</a>
                     </li>
                 {% endif %}
             </ul>
