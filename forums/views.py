@@ -57,12 +57,19 @@ class PostListView(ListView):
             .order_by("-created_at", "-id")  # 보조 정렬로 -id 유지
         )
 
-        # 커서 기반 필터링 (ID 기반)
         cursor = self.request.GET.get("cursor")
+        direction = self.request.GET.get("direction", "next")
+
         if cursor:
             try:
-                cursor_id = int(cursor)
-                queryset = queryset.filter(id__lt=cursor_id)
+                cursor_id = str(cursor)
+
+                if direction == "next":
+                    queryset = queryset.filter(id__lt=cursor_id)
+                else:
+                    queryset = queryset.filter(id__gt=cursor_id).order_by(
+                        "created_at", "id"
+                    )
             except ValueError:
                 raise Http404("Invalid cursor")
 
@@ -71,17 +78,32 @@ class PostListView(ListView):
     # 템플릿에 넘길 데이터(dict)를 만드는 단계
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        posts: QuerySet[Post] = self.object_list
+        posts = list(self.object_list)
+        direction = self.request.GET.get("direction", "next")
 
-        # 다음 페이지 커서 생성 (ID 사용)
-        if len(posts) > self.paginate_by:
-            last_post = posts[self.paginate_by - 1]
-            next_cursor = str(last_post.id)
-            context["next_cursor"] = next_cursor
-            context[self.context_object_name] = posts[: self.paginate_by]
+        if direction == "next":
+            if len(posts) > self.paginate_by:
+                last_post = posts[self.paginate_by - 1]
+                first_post = posts[0]
+                context["next_cursor"] = str(last_post.id)
+                context["prev_cursor"] = str(first_post.id)
+                context[self.context_object_name] = posts[: self.paginate_by]
+            else:
+                context["next_cursor"] = None
+                context["prev_cursor"] = str(posts[0].id) if posts else None
+                context[self.context_object_name] = posts
         else:
-            context["next_cursor"] = None
-            context[self.context_object_name] = posts
+            posts = list(reversed(posts))
+            if len(posts) > self.paginate_by:
+                first_post = posts[0]
+                last_post = posts[self.paginate_by - 1]
+                context["prev_cursor"] = str(first_post.id)
+                context["next_cursor"] = str(last_post.id)
+                context[self.context_object_name] = posts[: self.paginate_by]
+            else:
+                context["prev_cursor"] = None
+                context["next_cursor"] = str(posts[-1].id) if posts else None
+                context[self.context_object_name] = posts
 
         return context
 
