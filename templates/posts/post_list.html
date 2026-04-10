@@ -37,21 +37,14 @@
         </tbody>
     </table>
 
-    {% if is_paginated %}
+    <!-- 커서 기반 페이지네이션 -->
+    {% if next_cursor %}
         <nav>
             <ul class="pagination">
-                {% if page_obj.has_previous %}
-                    <li><a href="?page=1">&laquo; 처음</a></li>
-                    <li><a href="?page={{ page_obj.previous_page_number }}">이전</a></li>
-                {% endif %}
-
-                <span>페이지 {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
-
-                {% if page_obj.has_next %}
-                    <li><a href="?page={{ page_obj.next_page_number }}">다음</a></li>
-                    <li><a href="?page={{ page_obj.paginator.num_pages }}">끝 &raquo;</a></li>
-                {% endif %}
+                <li><a href="?cursor={{ next_cursor }}" class="btn btn-primary">다음</a></li>
             </ul>
         </nav>
+    {% else %}
+        <p class="text-center">마지막 페이지입니다.</p>
     {% endif %}
 {% endblock %}

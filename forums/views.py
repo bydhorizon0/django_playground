@@ -1,8 +1,9 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
-from django.db.models import Count, Prefetch, OuterRef, Subquery
+from django.db.models import Count, Prefetch, OuterRef, Subquery, Q, QuerySet
 from django.db.models.fields import IntegerField
 from django.db.models.functions import Coalesce
+from django.http import Http404
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -21,7 +22,6 @@ class PostListView(ListView):
     model = Post
     template_name = "posts/post_list.html"
     context_object_name = "posts"
-    ordering = ["-created_at"]
     paginate_by = 15
 
     def get_queryset(self):
@@ -32,7 +32,7 @@ class PostListView(ListView):
             .values("count")
         )
 
-        return (
+        queryset = (
             super()
             .get_queryset()
             .select_related("author")
@@ -42,7 +42,7 @@ class PostListView(ListView):
                         comment_count_subquery,
                         output_field=IntegerField(),
                     ),
-                    0,  #  None일 때 0으로 변환
+                    0,
                 )
             )
             .defer("content")
@@ -51,10 +51,39 @@ class PostListView(ListView):
                 "title",
                 "created_at",
                 "view_count",
-                "author__id",
+                "author_id",
                 "author__email",
             )
+            .order_by("-created_at", "-id")  # 보조 정렬로 -id 유지
         )
+
+        # 커서 기반 필터링 (ID 기반)
+        cursor = self.request.GET.get("cursor")
+        if cursor:
+            try:
+                cursor_id = int(cursor)
+                queryset = queryset.filter(id__lt=cursor_id)
+            except ValueError:
+                raise Http404("Invalid cursor")
+
+        return queryset[: self.paginate_by + 1]
+
+    # 템플릿에 넘길 데이터(dict)를 만드는 단계
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        posts: QuerySet[Post] = self.object_list
+
+        # 다음 페이지 커서 생성 (ID 사용)
+        if len(posts) > self.paginate_by:
+            last_post = posts[self.paginate_by - 1]
+            next_cursor = str(last_post.id)
+            context["next_cursor"] = next_cursor
+            context[self.context_object_name] = posts[: self.paginate_by]
+        else:
+            context["next_cursor"] = None
+            context[self.context_object_name] = posts
+
+        return context
 
 
 class PostDetailView(LoginRequiredMixin, DetailView):
