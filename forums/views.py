@@ -1,6 +1,8 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import models
-from django.db.models import Count, Prefetch
+from django.db.models import Count, Prefetch, OuterRef, Subquery
+from django.db.models.fields import IntegerField
+from django.db.models.functions import Coalesce
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse, reverse_lazy
 from django.views.generic import (
@@ -23,11 +25,35 @@ class PostListView(ListView):
     paginate_by = 15
 
     def get_queryset(self):
+        comment_count_subquery = (
+            Comment.objects.filter(post_id=OuterRef("pk"))
+            .values("post_id")
+            .annotate(count=Count("id"))
+            .values("count")
+        )
+
         return (
             super()
             .get_queryset()
             .select_related("author")
-            .annotate(comment_count=Count("comments"))
+            .annotate(
+                comment_count=Coalesce(
+                    Subquery(
+                        comment_count_subquery,
+                        output_field=IntegerField(),
+                    ),
+                    0,  #  None일 때 0으로 변환
+                )
+            )
+            .defer("content")
+            .only(
+                "id",
+                "title",
+                "created_at",
+                "view_count",
+                "author__id",
+                "author__email",
+            )
         )
 
 
