@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+    <article>
+        <h1>{{ post.title }}</h1>
+        <p>작성자: {{ post.author.email }} | 조회수: {{ post.view_count }} | 작성일: {{ post.created_at }}</p>
+        <hr>
+        <div class="content">
+            {{ post.content|linebreaks }}
+        </div>
+    </article>
+
+    {% if user == post.author %}
+        <a href="{% url 'forum:post-update' post.pk %}" class="btn btn-warning">수정</a>
+        <form action="{% url 'forum:post-delete' post.pk %}" method="post" style="display:inline;">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger" onclick="return confirm('정말 삭제하시겠습니까?');">삭제</button>
+        </form>
+    {% endif %}
+
+    <hr>
+
+    <h3>댓글 ({{ comments|length }})</h3>
+    <form action="{% url 'forum:comment-create' post.pk %}" method="post">
+        {% csrf_token %}
+        {{ comment_form.as_p }}
+        <button type="submit" class="btn btn-primary">댓글 등록</button>
+    </form>
+
+    <ul class="comment-list">
+        {% for comment in comments %}
+            <li>
+                <strong>{{ comment.author.email }}</strong>: {{ comment.content }}
+                <small>{{ comment.created_at }}</small>
+
+                <ul class="reply-list">
+                    {% for reply in comment.replies.all %}
+                        <li>
+                            └ <strong>{{ reply.author.email }}</strong>: {{ reply.content }}
+                        </li>
+                    {% endfor %}
+                </ul>
+
+                <form action="{% url 'forum:comment-create' post.pk %}" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="parent_id" value="{{ comment.id }}">
+                    <input type="text" name="content" required placeholder="답글을 입력하세요">
+                    <button type="submit">답글 등록</button>
+                </form>
+            </li>
+        {% endfor %}
+    </ul>
+{% endblock %}

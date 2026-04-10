@@ -25,4 +25,5 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("", accounts.views.home_view, name="home"),
     path("accounts/", include("accounts.urls")),
+    path("forum/", include("forums.urls")),
 ] + debug_toolbar_urls()

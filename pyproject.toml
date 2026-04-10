@@ -6,6 +6,7 @@ dependencies = [
     "django>=6.0.4",
     "django-debug-toolbar>=6.3.0",
     "django-extensions>=4.1",
+    "faker>=40.13.0",
     "psycopg[binary]>=3.3.3",
     "ruff>=0.15.9",
 ]

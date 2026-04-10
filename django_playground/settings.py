@@ -29,9 +29,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "django.contrib.postgres",
     "debug_toolbar",
     "django_extensions",
     "accounts.apps.AccountsConfig",
+    "forums.apps.ForumsConfig",
 ]
 
 MIDDLEWARE = [
@@ -71,9 +73,9 @@ WSGI_APPLICATION = "django_playground.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": "mydb",
-        "USER": "root",
-        "PASSWORD": "root123",
+        "NAME": "djangodb",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
         "HOST": "127.0.0.1",
         "PORT": "5432",
     }
